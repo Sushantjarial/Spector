@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build: .
+    build: ./backend
     container_name: harvey_backend
     ports:
       - "8080:8080"
