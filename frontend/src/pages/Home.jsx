@@ -1,23 +1,26 @@
 import { useState } from 'react'
-import { Send, Search, BookOpen, Shield, Cpu, AlertCircle, Scale } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import { Send, Search, BookOpen, Shield, Cpu, AlertCircle, Scale, Gavel, FileText } from 'lucide-react'
 
 const SUGGESTIONS = [
     'What does Article 14 say about equality?',
+    'What is the punishment for theft?',
+    'How does the bail process work?',
+    'What counts as digital evidence in court?',
     'Right to freedom of speech',
     'What is Article 21?',
-    'Rights against exploitation',
 ]
 
 const FEATURES = [
     {
         icon: Search,
         title: 'Semantic Search',
-        desc: 'Find relevant constitutional articles using natural language queries, powered by vector similarity.',
+        desc: 'Find relevant articles and sections across the Constitution, BNS, BNSS & BSA using natural language.',
     },
     {
         icon: Shield,
         title: 'Legally Grounded',
-        desc: 'Every answer is strictly grounded in the text of the Constitution — no hallucinations.',
+        desc: 'Every answer is strictly grounded in the text of the law — no hallucinations.',
     },
     {
         icon: Cpu,
@@ -27,9 +30,35 @@ const FEATURES = [
     {
         icon: BookOpen,
         title: 'Source Citations',
-        desc: 'Each response includes the exact Article numbers and Parts used to generate the answer.',
+        desc: 'Each response includes exact Article/Section numbers and the source law used.',
     },
 ]
+
+const SOURCE_LABELS = {
+    constitution: { prefix: 'Art.', color: '#f59e0b' },
+    bns: { prefix: 'BNS §', color: '#ef4444' },
+    bnss: { prefix: 'BNSS §', color: '#3b82f6' },
+    bsa: { prefix: 'BSA §', color: '#10b981' },
+}
+
+function SourceChip({ src }) {
+    const sourceType = src.source_type || 'constitution'
+    const config = SOURCE_LABELS[sourceType] || SOURCE_LABELS.constitution
+    const num = src.article_no || src.section_no || '?'
+    const title = src.title || ''
+
+    const Icon = sourceType === 'constitution' ? BookOpen : (sourceType === 'bns' ? Gavel : FileText)
+
+    return (
+        <span className="source-chip" style={{ borderColor: config.color + '40' }}>
+            <Icon size={14} style={{ color: config.color }} />
+            <span style={{ color: config.color, fontWeight: 600, marginRight: 4 }}>
+                {config.prefix}{num}
+            </span>
+            — {title}
+        </span>
+    )
+}
 
 export default function Home() {
     const [query, setQuery] = useState('')
@@ -97,12 +126,13 @@ export default function Home() {
                         <Scale size={14} /> AI-Powered Legal Assistant
                     </div>
                     <h1>
-                        Your Guide to the{' '}
-                        <span className="highlight">Indian Constitution</span>
+                        Your Guide to{' '}
+                        <span className="highlight">Indian Law</span>
                     </h1>
                     <p className="hero-subtitle">
-                        Ask any legal question about the Constitution of India and get
-                        accurate, article-referenced answers powered by AI.
+                        Ask any legal question about the Constitution, Criminal Law (BNS),
+                        Procedure (BNSS), or Evidence (BSA) — and get accurate, source-referenced
+                        answers powered by AI.
                     </p>
                 </div>
             </section>
@@ -116,7 +146,7 @@ export default function Home() {
                             <input
                                 id="query-input"
                                 type="text"
-                                placeholder="Ask a question about the Indian Constitution..."
+                                placeholder="Ask about the Constitution, BNS, BNSS, or BSA..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 autoComplete="off"
@@ -163,7 +193,7 @@ export default function Home() {
                                 <div className="typing-dot" />
                                 <div className="typing-dot" />
                             </div>
-                            <span className="typing-text">Jolly is analyzing the Constitution...</span>
+                            <span className="typing-text">Jolly is analyzing Indian Law...</span>
                         </div>
                     </div>
                 </div>
@@ -195,16 +225,15 @@ export default function Home() {
                             </div>
                         </div>
                         <div className="response-body">
-                            <div className="response-answer">{response.answer}</div>
+                            <div className="response-answer">
+                                <ReactMarkdown>{response.answer}</ReactMarkdown>
+                            </div>
                             {response.sources && response.sources.length > 0 && (
                                 <div className="response-sources">
-                                    <div className="response-sources-title">Referenced Articles</div>
+                                    <div className="response-sources-title">Referenced Sources</div>
                                     <div className="source-chips">
                                         {response.sources.map((src, i) => (
-                                            <span key={i} className="source-chip">
-                                                <BookOpen size={14} />
-                                                Art. {src.article_no} — {src.title}
-                                            </span>
+                                            <SourceChip key={i} src={src} />
                                         ))}
                                     </div>
                                 </div>

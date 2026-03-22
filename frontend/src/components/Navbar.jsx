@@ -34,7 +34,7 @@ export default function Navbar() {
                             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
                             onClick={() => setMobileOpen(false)}
                         >
-                            Browse Articles
+                            Browse Law
                         </NavLink>
                     </li>
                 </ul>
