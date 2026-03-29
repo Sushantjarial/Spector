@@ -5,12 +5,18 @@ Jolly LLB — RAG Retrieval & Synthesis
 2. Context injection -> Formatted source strings from Constitution, BNS, BNSS, BSA
 3. System prompt -> Structured, readable legal responses
 4. Output -> { answer, sources }
+
+LLM: OpenAI API (Ollama local LLM disabled)
 """
 
-from langchain_ollama import ChatOllama
-from langchain_core.messages import SystemMessage, HumanMessage
+from openai import OpenAI
 
-from app.config import OLLAMA_BASE_URL, LLM_MODEL
+# ── Disabled: Ollama local LLM ────────────────────────────
+# from langchain_ollama import ChatOllama
+# from langchain_core.messages import SystemMessage, HumanMessage
+# from app.config import OLLAMA_BASE_URL, LLM_MODEL
+
+from app.config import OPENAI_API_KEY, OPENAI_MODEL
 from app.hybrid_search import hybrid_retrieve
 
 SYSTEM_PROMPT = """You are **Jolly LLB**, a professional yet approachable AI Legal Assistant specializing in Indian Law.
@@ -47,10 +53,22 @@ RULES:
 7. When multiple laws apply to a query (e.g., a crime involves BNS for the offence, BNSS for procedure, and BSA for evidence), mention ALL relevant provisions across sources."""
 
 
-def _get_llm() -> ChatOllama:
-    """Fetch the LLM configuration fresh each time to avoid stale overrides."""
-    from app.config import LLM_MODEL, OLLAMA_BASE_URL
-    return ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL, temperature=0.1)
+# ── OpenAI client (replaces Ollama) ───────────────────────
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=OPENAI_API_KEY)
+    return _client
+
+
+# ── Disabled: Ollama LLM loader ───────────────────────────
+# def _get_llm() -> ChatOllama:
+#     """Fetch the LLM configuration fresh each time to avoid stale overrides."""
+#     from app.config import LLM_MODEL, OLLAMA_BASE_URL
+#     return ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL, temperature=0.1)
 
 
 def _format_source(doc, idx: int) -> tuple[str, dict]:
@@ -90,7 +108,7 @@ def get_legal_advice(user_query: str) -> dict:
     RAG workflow:
       1. Hybrid retrieve across Constitution + BNS + BNSS + BSA
       2. Format context with source labels
-      3. Query LLM with structured legal system prompt
+      3. Query OpenAI with structured legal system prompt
       4. Return { answer, sources }
     """
     # Step 1 -- Retrieve via multi-collection hybrid pipeline
@@ -109,12 +127,24 @@ def get_legal_advice(user_query: str) -> dict:
 
     context = "\n\n---\n\n".join(context_parts)
 
-    # Step 3 -- Query LLM (cached singleton)
-    llm = _get_llm()
-    response = llm.invoke([
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=f"Context:\n{context}\n\n---\n\nUser Query: {user_query}"),
-    ])
+    # Step 3 -- Query OpenAI
+    client = _get_client()
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        temperature=0.1,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Context:\n{context}\n\n---\n\nUser Query: {user_query}"},
+        ],
+    )
+
+    # ── Disabled: Ollama LLM call ─────────────────────────
+    # llm = _get_llm()
+    # response = llm.invoke([
+    #     SystemMessage(content=SYSTEM_PROMPT),
+    #     HumanMessage(content=f"Context:\n{context}\n\n---\n\nUser Query: {user_query}"),
+    # ])
+    # return {"answer": response.content, "sources": sources}
 
     # Step 4 -- Return
-    return {"answer": response.content, "sources": sources}
+    return {"answer": response.choices[0].message.content, "sources": sources}

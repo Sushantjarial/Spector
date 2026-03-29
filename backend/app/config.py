@@ -3,8 +3,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-LLM_MODEL = os.getenv("LLM_MODEL", "Llama3.1:8B")
+# ── OpenAI (replaces local Ollama LLM) ────────────────────
+OPENAI_API_KEY = os.getenv("MY_OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+# ── Disabled: Ollama local LLM ────────────────────────────
+# OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+# LLM_MODEL = os.getenv("LLM_MODEL", "Llama3.1:8B")
 
 # Embedding: HuggingFace bge-small-en-v1.5 (fast, 33MB, runs locally without Ollama)
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")

@@ -2,14 +2,15 @@ version: "3.9"
 
 services:
 
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
+  # ── Disabled: Ollama local LLM ──────────────────────────
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
 
   chromadb:
     image: chromadb/chroma
@@ -27,9 +28,10 @@ services:
       - "8080:8080"
     depends_on:
       - chromadb
-      - ollama
+      # - ollama
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - MY_OPENAI_API_KEY=${MY_OPENAI_API_KEY}
+      # - OLLAMA_BASE_URL=http://ollama:11434
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
     command: uvicorn app.main:app --host 0.0.0.0 --port 8080
@@ -44,5 +46,5 @@ services:
       - backend
     restart: unless-stopped
 
-volumes:
-  ollama_data:
+# volumes:
+#   ollama_data:
