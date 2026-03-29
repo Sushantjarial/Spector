@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+python-multipart
 python-dotenv
 openai
 langchain
@@ -8,6 +9,7 @@ langchain-huggingface
 chromadb
 rank_bm25
 flashrank
+pypdf
 
 # ── Disabled: Ollama local LLM ────────────────────────────
 # langchain-ollama

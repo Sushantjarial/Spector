@@ -10,11 +10,12 @@ GET  /sections  → List all sections from BNS/BNSS/BSA
 import json
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.rag import get_legal_advice
+from app.case_analyzer import analyze_case_file
 
 app = FastAPI(
     title="Jolly LLB",
@@ -73,6 +74,21 @@ async def query_law(req: QueryRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/analyze_case", response_model=QueryResponse, tags=["Case Analyzer"])
+async def analyze_case(file: UploadFile = File(...), query: str = Form(...)):
+    """Analyze an uploaded case document in-memory."""
+    try:
+        content = await file.read()
+        result = analyze_case_file(
+            file_content=content, 
+            filename=file.filename, 
+            content_type=file.content_type, 
+            query=query
+        )
+        return QueryResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/articles", tags=["Reference"])
 async def list_articles():
